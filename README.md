@@ -11,6 +11,7 @@
 - **桶与文件操作**：浏览桶、目录和对象，下载、上传、拖拽导出到资源管理器。
 - **权限与策略**：可视化查看和编辑桶 ACL 与 Bucket Policy，支持私有、公共只读和自定义三档。
 - **单文件发行**：构建时把 rclone 引擎压缩内嵌进 EXE，运行时按 SHA-256 校验后释放，不捆绑任何连接配置或认证信息。
+- **配置迁移**：路径设置、rclone 配置与挂载记录可一键打包导出/导入，换机迁移不丢连接。
 
 ## 环境要求
 
@@ -55,12 +56,16 @@ build.cmd -NoEmbeddedRclone
 {
   "RcloneExecutable": "C:\\path\\to\\rclone.exe",
   "RcloneConfiguration": "C:\\path\\to\\rclone.conf",
+  "FileManagerExecutable": "C:\\Program Files\\Directory Opus\\dopus.exe",
   "ServerModtimeRemotes": ["my-minio"]
 }
 ```
 
-- `RcloneExecutable` / `RcloneConfiguration`：自定义 rclone 程序与配置文件路径，留空时使用程序目录或内嵌引擎。
+- `RcloneExecutable` / `RcloneConfiguration`：自定义 rclone 程序与配置文件路径。`RcloneExecutable` 留空时使用程序目录或内嵌引擎。
+- `FileManagerExecutable`：打开本地目录时使用的文件管理器。留空时自动探测 Pulse，其次 Directory Opus；也可直接指定 `dopus.exe`。
 - `ServerModtimeRemotes`：需要追加 `--use-server-modtime` 的连接标识列表，默认为空。某些 S3 兼容服务（如部分 MinIO 部署）在浏览目录时依赖服务器修改时间，可在此按连接名配置。
+
+程序内「更多 → 路径设置…」可配置以上路径，并提供「导出配置包 / 导入配置包」：配置包为 zip，包含设置、`rclone.conf` 与挂载记录，导入前会把原文件备份为 `.bak`。注意 `rclone.conf` 含连接认证信息，配置包请妥善保管。
 
 ## 目录结构
 

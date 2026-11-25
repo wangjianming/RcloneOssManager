@@ -14,9 +14,9 @@ namespace RcloneOssManager
         private static string cachedManager;
         private static bool resolved;
 
-        /// <summary>按安装路径给出的候选程序，顺序即优先级。</summary>
-        /// <returns>可能存在的程序完整路径。</returns>
-        internal static string[] PulseCandidates()
+        /// <summary>自动探测的根目录，按优先级排列。</summary>
+        /// <returns>可能包含文件管理器的安装根目录。</returns>
+        private static List<string> Roots()
         {
             var roots = new List<string>();
             Add(roots, Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
@@ -24,11 +24,33 @@ namespace RcloneOssManager
             Add(roots, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs"));
             roots.Add(@"D:\Program Files");
             roots.Add(@"D:\Program Files (x86)");
+            roots.Add(@"D:\tools");
+            return roots;
+        }
+
+        /// <summary>按安装路径给出的 Pulse 候选程序，顺序即优先级。</summary>
+        /// <returns>可能存在的 Pulse 完整路径。</returns>
+        internal static string[] PulseCandidates()
+        {
             var list = new List<string>();
-            foreach (var root in roots)
+            foreach (var root in Roots())
             {
                 if (String.IsNullOrWhiteSpace(root)) continue;
                 var candidate = Path.Combine(root, "Pulse", "pulse.exe");
+                if (!list.Contains(candidate, StringComparer.OrdinalIgnoreCase)) list.Add(candidate);
+            }
+            return list.ToArray();
+        }
+
+        /// <summary>自动探测的文件管理器候选：Pulse 优先，其次 Directory Opus。</summary>
+        /// <returns>可能存在的程序完整路径。</returns>
+        internal static string[] FileManagerCandidates()
+        {
+            var list = new List<string>(PulseCandidates());
+            foreach (var root in Roots())
+            {
+                if (String.IsNullOrWhiteSpace(root)) continue;
+                var candidate = Path.Combine(root, "Directory Opus", "dopus.exe");
                 if (!list.Contains(candidate, StringComparer.OrdinalIgnoreCase)) list.Add(candidate);
             }
             return list.ToArray();
@@ -40,24 +62,27 @@ namespace RcloneOssManager
             if (!roots.Contains(value, StringComparer.OrdinalIgnoreCase)) roots.Add(value);
         }
 
-        /// <summary>定位可用的文件管理器：先查常见安装路径，再查卸载登记，最后返回空值表示用系统默认。</summary>
+        /// <summary>定位可用的文件管理器：优先用户配置，再查常见安装路径，最后查卸载登记；空值表示用系统默认。</summary>
         /// <returns>可执行文件路径或空值。</returns>
         internal static string ResolveManager()
         {
             if (resolved) return cachedManager;
             resolved = true;
-            foreach (var candidate in PulseCandidates())
+            var configured = RuntimePaths.Current.FileManagerExecutable;
+            if (!String.IsNullOrWhiteSpace(configured) && File.Exists(configured)) { cachedManager = configured; return cachedManager; }
+            foreach (var candidate in FileManagerCandidates())
             {
                 if (File.Exists(candidate)) { cachedManager = candidate; return cachedManager; }
             }
-            cachedManager = FromRegistry("Pulse");
+            cachedManager = FromRegistry("Pulse", "pulse.exe");
+            if (cachedManager == null) cachedManager = FromRegistry("Directory Opus", "dopus.exe");
             return cachedManager;
         }
 
         /// <summary>从卸载登记里找程序的安装目录，覆盖用户自定义安装盘符的情况。</summary>
-        /// <param name="displayName">产品名关键字。</param>
+        /// <param name="displayName">产品名关键字。</param><param name="executableName">安装目录下的主程序文件名。</param>
         /// <returns>可执行文件路径或空值。</returns>
-        internal static string FromRegistry(string displayName)
+        internal static string FromRegistry(string displayName, string executableName)
         {
             if (String.IsNullOrWhiteSpace(displayName)) return null;
             var views = new[] { RegistryView.Registry64, RegistryView.Registry32 };
@@ -66,7 +91,7 @@ namespace RcloneOssManager
             {
                 foreach (var view in views)
                 {
-                    var found = Scan(OpenBaseKey(hive, view), displayName);
+                    var found = Scan(OpenBaseKey(hive, view), displayName, executableName);
                     if (found != null) return found;
                 }
             }
@@ -81,7 +106,7 @@ namespace RcloneOssManager
             catch (IOException) { return null; }
         }
 
-        private static string Scan(RegistryKey rootKey, string displayName)
+        private static string Scan(RegistryKey rootKey, string displayName, string executableName)
         {
             if (rootKey == null) return null;
             RegistryKey uninstall = null;
@@ -98,7 +123,7 @@ namespace RcloneOssManager
                         if (item == null) continue;
                         var title = item.GetValue("DisplayName") as string;
                         if (String.IsNullOrWhiteSpace(title) || title.IndexOf(displayName, StringComparison.OrdinalIgnoreCase) < 0) continue;
-                        var exe = ExecutableFrom(item);
+                        var exe = ExecutableFrom(item, executableName);
                         if (exe != null) return exe;
                     }
                     catch (System.Security.SecurityException) { }
@@ -118,12 +143,12 @@ namespace RcloneOssManager
             return null;
         }
 
-        private static string ExecutableFrom(RegistryKey item)
+        private static string ExecutableFrom(RegistryKey item, string executableName)
         {
             var location = item.GetValue("InstallLocation") as string;
             if (!String.IsNullOrWhiteSpace(location))
             {
-                var candidate = Path.Combine(location.Trim().Trim('"'), "pulse.exe");
+                var candidate = Path.Combine(location.Trim().Trim('"'), executableName);
                 if (File.Exists(candidate)) return candidate;
             }
             var icon = item.GetValue("DisplayIcon") as string;
