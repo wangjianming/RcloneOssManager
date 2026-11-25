@@ -492,14 +492,27 @@ namespace RcloneOssManager
         }
 
         /// <summary>拼装挂载参数：不带 <c>--network-mode</c>，盘符按本地盘显示卷标，不再拖上网络盘的 (\\server) 后缀。</summary>
-        /// <param name="configPath">rclone 配置文件。</param><param name="name">连接标识。</param><param name="drive">盘符。</param><param name="volumeName">本地磁盘名称。</param><param name="serverModtimeRemotes">需要服务器修改时间的连接；为空时读取设置。</param><returns>参数列表。</returns>
-        internal static List<string> MountArguments(string configPath, string name, string drive, string volumeName, IEnumerable<string> serverModtimeRemotes = null)
+        /// <param name="configPath">rclone 配置文件。</param><param name="name">连接标识。</param><param name="drive">盘符。</param><param name="volumeName">本地磁盘名称。</param><param name="serverModtimeRemotes">需要服务器修改时间的连接；为空时读取设置。</param><param name="mountOptions">挂载高级参数；为空时读取设置。</param><returns>参数列表。</returns>
+        internal static List<string> MountArguments(string configPath, string name, string drive, string volumeName, IEnumerable<string> serverModtimeRemotes = null, RuntimePaths mountOptions = null)
         {
             var args = new List<string> { "--config", configPath, "mount", name + ":", drive, "--vfs-cache-mode", "full", "--volname", volumeName, "--log-file", OperationLogPath(name), "--log-level", "ERROR" };
+            var options = mountOptions ?? RuntimePaths.Current;
+            AddOption(args, "--cache-dir", options.CacheDirectory);
+            AddOption(args, "--dir-cache-time", options.DirCacheTime);
+            AddOption(args, "--vfs-cache-max-size", options.VfsCacheMaxSize);
+            AddOption(args, "--vfs-cache-max-age", options.VfsCacheMaxAge);
+            AddOption(args, "--buffer-size", options.BufferSize);
             // 这些连接使用服务器修改时间，避免浏览目录时逐个请求对象元数据；其他连接保持原行为。
             var remotes = serverModtimeRemotes ?? ServerModtimeRemotes;
             if (remotes != null && remotes.Any(x => String.Equals(x, name, StringComparison.OrdinalIgnoreCase))) args.Add("--use-server-modtime");
             return args;
+        }
+
+        /// <summary>仅在设置提供值时追加挂载参数，空值保持 rclone 默认。</summary>
+        private static void AddOption(List<string> args, string flag, string value)
+        {
+            if (String.IsNullOrWhiteSpace(value)) return;
+            args.Add(flag); args.Add(value.Trim());
         }
 
         /// <summary>将已挂载连接迁移至新盘符或新名称，失败时优先恢复原挂载。</summary>

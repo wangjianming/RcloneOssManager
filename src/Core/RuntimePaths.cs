@@ -20,6 +20,16 @@ namespace RcloneOssManager
         public string[] ServerModtimeRemotes { get; set; }
         /// <summary>界面主题：light 或 dark；空值按浅色处理。</summary>
         public string Theme { get; set; }
+        /// <summary>挂载缓存目录；空值使用 rclone 默认位置。</summary>
+        public string CacheDirectory { get; set; }
+        /// <summary>目录列表缓存时长，例如 12h；空值使用 rclone 默认。</summary>
+        public string DirCacheTime { get; set; }
+        /// <summary>VFS 缓存上限，例如 20G；空值使用 rclone 默认（无上限）。</summary>
+        public string VfsCacheMaxSize { get; set; }
+        /// <summary>VFS 缓存最长保留时间，例如 24h；空值使用 rclone 默认（无限制）。</summary>
+        public string VfsCacheMaxAge { get; set; }
+        /// <summary>传输缓冲大小，例如 64M；空值使用 rclone 默认。</summary>
+        public string BufferSize { get; set; }
         private string settingsFile, baseFolder, dataFolder;
         private static RuntimePaths current;
         internal static RuntimePaths Current { get { return current ?? (current = Load()); } }
@@ -108,7 +118,7 @@ namespace RcloneOssManager
             Directory.CreateDirectory(Path.GetDirectoryName(settingsFile)); var stage = settingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try
             {
-                File.WriteAllText(stage, new JavaScriptSerializer().Serialize(new RuntimePaths { RcloneExecutable = executable, RcloneConfiguration = configuration, FileManagerExecutable = fileManager, ServerModtimeRemotes = ServerModtimeRemotes, Theme = selectedTheme }), new UTF8Encoding(false));
+                File.WriteAllText(stage, new JavaScriptSerializer().Serialize(new RuntimePaths { RcloneExecutable = executable, RcloneConfiguration = configuration, FileManagerExecutable = fileManager, ServerModtimeRemotes = ServerModtimeRemotes, Theme = selectedTheme, CacheDirectory = CacheDirectory, DirCacheTime = DirCacheTime, VfsCacheMaxSize = VfsCacheMaxSize, VfsCacheMaxAge = VfsCacheMaxAge, BufferSize = BufferSize }), new UTF8Encoding(false));
                 if (File.Exists(settingsFile)) File.Replace(stage, settingsFile, settingsFile + ".bak"); else File.Move(stage, settingsFile);
                 var saved = new JavaScriptSerializer().Deserialize<RuntimePaths>(File.ReadAllText(settingsFile, Encoding.UTF8));
                 if (saved.RcloneExecutable != executable || saved.RcloneConfiguration != configuration || saved.FileManagerExecutable != fileManager || saved.Theme != selectedTheme) throw new IOException("路径设置读回核验失败。");

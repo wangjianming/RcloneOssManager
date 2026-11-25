@@ -57,13 +57,19 @@ build.cmd -NoEmbeddedRclone
   "RcloneExecutable": "C:\\path\\to\\rclone.exe",
   "RcloneConfiguration": "C:\\path\\to\\rclone.conf",
   "FileManagerExecutable": "C:\\Program Files\\Directory Opus\\dopus.exe",
-  "ServerModtimeRemotes": ["my-minio"]
+  "ServerModtimeRemotes": ["my-minio"],
+  "CacheDirectory": "D:\\rclone-cache",
+  "DirCacheTime": "12h",
+  "VfsCacheMaxSize": "20G",
+  "VfsCacheMaxAge": "24h",
+  "BufferSize": "64M"
 }
 ```
 
 - `RcloneExecutable` / `RcloneConfiguration`：自定义 rclone 程序与配置文件路径。`RcloneExecutable` 留空时使用程序目录或内嵌引擎。
 - `FileManagerExecutable`：打开本地目录时使用的文件管理器。留空时自动探测 Pulse，其次 Directory Opus；也可直接指定 `dopus.exe`。
 - `ServerModtimeRemotes`：需要追加 `--use-server-modtime` 的连接标识列表，默认为空。某些 S3 兼容服务（如部分 MinIO 部署）在浏览目录时依赖服务器修改时间，可在此按连接名配置。
+- `CacheDirectory` / `DirCacheTime` / `VfsCacheMaxSize` / `VfsCacheMaxAge` / `BufferSize`：分别对应 rclone 的 `--cache-dir`、`--dir-cache-time`、`--vfs-cache-max-size`、`--vfs-cache-max-age`、`--buffer-size`。留空使用 rclone 默认值；建议至少设置 `VfsCacheMaxSize`，否则 rclone 默认不限制 VFS 缓存大小。
 
 程序内「更多 → 路径设置…」可配置以上路径，并提供「导出配置包 / 导入配置包」：配置包为 zip，包含设置、`rclone.conf` 与挂载记录，导入前会把原文件备份为 `.bak`。注意 `rclone.conf` 含连接认证信息，配置包请妥善保管。
 

@@ -688,11 +688,13 @@ namespace RcloneOssManager
             importItem.Click += delegate { ImportConnections(); };
             var pathsItem = new ToolStripMenuItem("路径设置…");
             pathsItem.Click += delegate { using (var dialog = new RuntimeSettingsForm()) dialog.ShowDialog(this); };
+            var themeItem = new ToolStripMenuItem("切换为深色皮肤");
+            themeItem.Click += delegate { ToggleTheme(); };
             var upgradeItem = new ToolStripMenuItem("升级 rclone");
             upgradeItem.Click += delegate { UpgradeRclone(); };
             var aboutItem = new ToolStripMenuItem("关于");
             aboutItem.Click += delegate { using (var dialog = new AboutForm(this)) dialog.ShowDialog(this); };
-            moreMenu.Items.AddRange(new ToolStripItem[] { deleteItem, new ToolStripSeparator(), logItem, configItem, new ToolStripSeparator(), exportItem, importItem, pathsItem, new ToolStripSeparator(), upgradeItem, new ToolStripSeparator(), aboutItem });
+            moreMenu.Items.AddRange(new ToolStripItem[] { deleteItem, new ToolStripSeparator(), logItem, configItem, new ToolStripSeparator(), exportItem, importItem, pathsItem, themeItem, new ToolStripSeparator(), upgradeItem, new ToolStripSeparator(), aboutItem });
             moreMenu.Opening += delegate
             {
                 var selected = SelectedName();
@@ -703,6 +705,8 @@ namespace RcloneOssManager
                 exportItem.Enabled = !busy;
                 importItem.Enabled = !busy;
                 pathsItem.Enabled = !busy;
+                themeItem.Text = UiStyle.IsDark ? "切换为浅色皮肤" : "切换为深色皮肤";
+                themeItem.Enabled = !busy;
                 upgradeItem.Enabled = !busy && tests.Count == 0;
                 aboutItem.Enabled = !busy;
             };
