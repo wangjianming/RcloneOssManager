@@ -99,10 +99,10 @@ namespace RcloneOssManager
         /// <param name="executable">明确选择的rclone程序。</param><param name="configuration">配置文件路径。</param><param name="fileManagerExecutable">文件管理器程序，可空。</param><param name="theme">界面主题 light 或 dark，可空表示保持不变。</param>
         internal void Save(string executable, string configuration, string fileManagerExecutable = null, string theme = null)
         {
-            executable = FullPath(executable); configuration = FullPath(configuration);
+            executable = String.IsNullOrWhiteSpace(executable) ? String.Empty : FullPath(executable); configuration = FullPath(configuration);
             var fileManager = String.IsNullOrWhiteSpace(fileManagerExecutable) ? null : FullPath(fileManagerExecutable.Trim());
             var selectedTheme = String.IsNullOrWhiteSpace(theme) ? Theme : theme.Trim().ToLowerInvariant();
-            if (!File.Exists(executable) || !String.Equals(Path.GetExtension(executable), ".exe", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("请选择存在的rclone.exe。");
+            if (executable.Length > 0 && (!File.Exists(executable) || !String.Equals(Path.GetExtension(executable), ".exe", StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("请选择存在的rclone.exe。");
             if (!File.Exists(configuration)) throw new ArgumentException("请选择存在的rclone配置文件。");
             if (fileManager != null && (!File.Exists(fileManager) || !String.Equals(Path.GetExtension(fileManager), ".exe", StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("请选择存在的文件管理器程序。");
             Directory.CreateDirectory(Path.GetDirectoryName(settingsFile)); var stage = settingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";

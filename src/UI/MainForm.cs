@@ -112,7 +112,14 @@ namespace RcloneOssManager
             mainSplit.Panel2.Controls.Add(fileHost);
             upgradeProgress.Dock = DockStyle.Bottom; upgradeProgress.Height = 6; upgradeProgress.Minimum = 0; upgradeProgress.Maximum = 100; upgradeProgress.Visible = false;
             status.Dock = DockStyle.Fill; status.Padding = new Padding(4, 3, 0, 0); status.Text = "选择左侧连接即可在右侧浏览和管理文件。";
-            var footer = new Panel { Dock = DockStyle.Fill }; footer.Controls.Add(status); footer.Controls.Add(upgradeProgress);
+            var themeToggle = ButtonOf(UiStyle.IsDark ? "浅色" : "深色", UiStyle.AccentSoft, UiStyle.AccentText);
+            themeToggle.Dock = DockStyle.Fill; themeToggle.Margin = new Padding(2, 2, 0, 2);
+            themeToggle.Click += delegate { ToggleTheme(); };
+            var statusBar = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = new Padding(0) };
+            statusBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            statusBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76));
+            statusBar.Controls.Add(status, 0, 0); statusBar.Controls.Add(themeToggle, 1, 0);
+            var footer = new Panel { Dock = DockStyle.Fill }; footer.Controls.Add(statusBar); footer.Controls.Add(upgradeProgress);
             layout.Controls.Add(mainSplit, 0, 0); layout.Controls.Add(footer, 0, 1); Controls.Add(layout);
             UiStyle.BindColumns(list, SideMinimumWidths, SideColumnWeights);
             add.Click += delegate { OpenEditor(null); };
@@ -675,15 +682,17 @@ namespace RcloneOssManager
             logItem.Click += delegate { OpenSelectedLog(); };
             var configItem = new ToolStripMenuItem("编辑 rclone 配置");
             configItem.Click += delegate { OpenConfigFile(); };
-            var exportItem = new ToolStripMenuItem("导出连接清单…");
+            var exportItem = new ToolStripMenuItem("导出连接信息（JSON）…");
             exportItem.Click += delegate { ExportConnections(); };
+            var importItem = new ToolStripMenuItem("导入连接信息（JSON）…");
+            importItem.Click += delegate { ImportConnections(); };
             var pathsItem = new ToolStripMenuItem("路径设置…");
             pathsItem.Click += delegate { using (var dialog = new RuntimeSettingsForm()) dialog.ShowDialog(this); };
             var upgradeItem = new ToolStripMenuItem("升级 rclone");
             upgradeItem.Click += delegate { UpgradeRclone(); };
             var aboutItem = new ToolStripMenuItem("关于");
             aboutItem.Click += delegate { using (var dialog = new AboutForm(this)) dialog.ShowDialog(this); };
-            moreMenu.Items.AddRange(new ToolStripItem[] { deleteItem, new ToolStripSeparator(), logItem, configItem, new ToolStripSeparator(), exportItem, pathsItem, new ToolStripSeparator(), upgradeItem, new ToolStripSeparator(), aboutItem });
+            moreMenu.Items.AddRange(new ToolStripItem[] { deleteItem, new ToolStripSeparator(), logItem, configItem, new ToolStripSeparator(), exportItem, importItem, pathsItem, new ToolStripSeparator(), upgradeItem, new ToolStripSeparator(), aboutItem });
             moreMenu.Opening += delegate
             {
                 var selected = SelectedName();
@@ -692,27 +701,60 @@ namespace RcloneOssManager
                 logItem.Enabled = !busy && selected != null;
                 configItem.Enabled = !busy;
                 exportItem.Enabled = !busy;
+                importItem.Enabled = !busy;
                 pathsItem.Enabled = !busy;
                 upgradeItem.Enabled = !busy && tests.Count == 0;
                 aboutItem.Enabled = !busy;
             };
         }
 
-        /// <summary>把当前连接清单导出为 CSV，只含名称、类型、端点等公开字段，不含账号与密钥。</summary>
+        /// <summary>把连接信息导出为 JSON，可选择附带账号与密钥明文。</summary>
         private void ExportConnections()
         {
-            using (var dialog = new SaveFileDialog { Filter = "CSV 文件|*.csv|文本文件|*.txt", FileName = "rclone-connections.csv" })
+            using (var dialog = new SaveFileDialog { Filter = "JSON 文件|*.json", FileName = "rclone-connections.json" })
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
-                var includeSecrets = MessageBox.Show(this, "是否在导出文件中包含账号与密钥明文？\r\n包含后任何拿到该文件的人都能看到凭证，请妥善保管。", "导出连接清单", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;
+                var includeSecrets = MessageBox.Show(this, "是否在导出文件中包含账号与密钥明文？\r\n不含密钥时，导入到新电脑会缺少凭证，需要重新填写。", "导出连接信息", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;
                 try
                 {
-                    var csv = ConnectionExport.BuildCsv(client, client.GetRemotes(), GetMounts(), includeSecrets);
-                    File.WriteAllText(dialog.FileName, csv, new UTF8Encoding(true));
-                    UiStyle.SetStatus(status, "已导出连接清单" + (includeSecrets ? "（含密钥）" : "") + "：" + dialog.FileName, "success");
+                    var json = ConnectionExport.BuildJson(client, client.GetRemotes(), includeSecrets);
+                    File.WriteAllText(dialog.FileName, json, new UTF8Encoding(false));
+                    UiStyle.SetStatus(status, "已导出连接信息" + (includeSecrets ? "（含密钥）" : "") + "：" + dialog.FileName, "success");
                 }
-                catch (Exception ex) { UiStyle.SetStatus(status, "导出连接清单失败：" + ex.Message, "error"); }
+                catch (Exception ex) { UiStyle.SetStatus(status, "导出连接信息失败：" + ex.Message, "error"); }
             }
+        }
+
+        /// <summary>从 JSON 导入连接，按名称新增或更新，导入前备份 rclone.conf。</summary>
+        private void ImportConnections()
+        {
+            using (var dialog = new OpenFileDialog { Filter = "JSON 文件|*.json", CheckFileExists = true })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                if (MessageBox.Show(this, "导入会按名称新增或更新连接，并先备份 rclone.conf 为 .bak。确定继续？", "导入连接信息", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
+                try
+                {
+                    var message = ConnectionExport.Import(client, dialog.FileName);
+                    LoadRows();
+                    UiStyle.SetStatus(status, "已导入连接信息。", "success");
+                    MessageBox.Show(this, message, "导入连接信息", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex) { UiStyle.SetStatus(status, "导入连接信息失败：" + ex.Message, "error"); }
+            }
+        }
+
+        /// <summary>切换明暗皮肤并保存设置，随后以新实例重启以应用全部配色。</summary>
+        private void ToggleTheme()
+        {
+            var next = UiStyle.IsDark ? "light" : "dark";
+            try { RuntimePaths.Current.Save(RuntimePaths.Current.RcloneExecutable, RuntimePaths.Current.RcloneConfiguration, RuntimePaths.Current.FileManagerExecutable, next); }
+            catch (Exception ex) { MessageBox.Show(this, "切换皮肤失败：" + ex.Message, "皮肤", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            try
+            {
+                Process.Start(new ProcessStartInfo(Application.ExecutablePath, "--theme-restart"));
+                Close();
+            }
+            catch (Exception ex) { MessageBox.Show(this, "已保存皮肤设置，请手动重启程序生效。\r\n" + ex.Message, "皮肤", MessageBoxButtons.OK, MessageBoxIcon.Information); }
         }
 
         private static Icon LoadIcon() { return RuntimePaths.LoadIcon(); }

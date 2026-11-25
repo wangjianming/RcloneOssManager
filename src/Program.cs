@@ -27,6 +27,8 @@ namespace RcloneOssManager
             try { UiStyle.IsDark = String.Equals(RuntimePaths.Current.Theme, "dark", StringComparison.OrdinalIgnoreCase); }
             catch (Exception) { UiStyle.IsDark = false; }
             var background = argv != null && argv.Any(x => String.Equals(x, "--background", StringComparison.OrdinalIgnoreCase));
+            // 切换皮肤后旧实例拉起新进程，先等旧实例退出并释放单实例互斥体。
+            if (argv != null && argv.Any(x => String.Equals(x, "--theme-restart", StringComparison.OrdinalIgnoreCase))) Thread.Sleep(2500);
             bool created;
             try { singleInstance = new Mutex(true, SingleInstanceChannel.MutexName(background), out created); }
             catch (UnauthorizedAccessException) { created = true; }
