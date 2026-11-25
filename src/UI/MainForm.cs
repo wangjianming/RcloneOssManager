@@ -262,7 +262,7 @@ namespace RcloneOssManager
                 }
                 finally { if (structural) list.EndUpdate(); }
             }
-            catch (Exception ex) { UiStyle.SetStatus(status, "刷新失败，已保留现有列表。请查看日志。", "error"); ManagerLog.Write("刷新失败", "", "", ex.Message); }
+            catch (Exception ex) { UiStyle.SetStatus(status, "刷新失败，已保留现有列表：" + ex.Message, "error"); ManagerLog.Write("刷新失败", "", "", ex.Message); }
             finally
             {
                 refreshing = false;
@@ -543,11 +543,11 @@ namespace RcloneOssManager
                             DateTime last; if (restoreAttempts.TryGetValue(entry.Key, out last) && (DateTime.Now - last).TotalSeconds < 30) continue;
                             restoreAttempts[entry.Key] = DateTime.Now;
                             try { client.Mount(entry.Key, entry.Value.Drive, entry.Value.VolumeName); ManagerLog.Write("自动恢复挂载", entry.Key, entry.Value.Drive, "success"); }
-                            catch (Exception ex) { ManagerLog.Write("自动恢复挂载失败", entry.Key, entry.Value.Drive, ex.Message); }
+                            catch (Exception ex) { ManagerLog.Write("自动恢复挂载失败", entry.Key, entry.Value.Drive, ex.Message); UiStyle.SetStatus(status, "自动恢复挂载失败（" + entry.Key + "）：" + ex.Message, "error"); }
                         }
                     }
                 }
-                catch (Exception ex) { ManagerLog.Write("检查恢复挂载失败", "", "", ex.Message); }
+                catch (Exception ex) { ManagerLog.Write("检查恢复挂载失败", "", "", ex.Message); UiStyle.SetStatus(status, "检查恢复挂载失败：" + ex.Message, "error"); }
                 finally { Interlocked.Exchange(ref restoreRunning, 0); }
             });
         }

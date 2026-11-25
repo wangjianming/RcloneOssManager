@@ -495,7 +495,7 @@ namespace RcloneOssManager
         /// <param name="configPath">rclone 配置文件。</param><param name="name">连接标识。</param><param name="drive">盘符。</param><param name="volumeName">本地磁盘名称。</param><param name="serverModtimeRemotes">需要服务器修改时间的连接；为空时读取设置。</param><returns>参数列表。</returns>
         internal static List<string> MountArguments(string configPath, string name, string drive, string volumeName, IEnumerable<string> serverModtimeRemotes = null)
         {
-            var args = new List<string> { "--config", configPath, "mount", name + ":", drive, "--vfs-cache-mode", "full", "--volname", volumeName, "--log-file", OperationLogPath(name), "--log-level", "INFO" };
+            var args = new List<string> { "--config", configPath, "mount", name + ":", drive, "--vfs-cache-mode", "full", "--volname", volumeName, "--log-file", OperationLogPath(name), "--log-level", "ERROR" };
             // 这些连接使用服务器修改时间，避免浏览目录时逐个请求对象元数据；其他连接保持原行为。
             var remotes = serverModtimeRemotes ?? ServerModtimeRemotes;
             if (remotes != null && remotes.Any(x => String.Equals(x, name, StringComparison.OrdinalIgnoreCase))) args.Add("--use-server-modtime");

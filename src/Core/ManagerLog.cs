@@ -22,9 +22,10 @@ namespace RcloneOssManager
         private static readonly object SyncRoot = new object();
         private static readonly string FilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "rclone-oss-manager.log");
 
-        /// <summary>记录不含任何凭据的本机操作结果，供故障排查使用。</summary>
+        /// <summary>记录不含任何凭据的本机操作结果，供故障排查使用；成功操作不落盘，避免日志持续增长。</summary>
         internal static void Write(string action, string remote, string drive, string result)
         {
+            if (result == "success") return;
             var detail = result == "success" ? "成功" : ErrorText.ToChinese(result);
             try { lock (SyncRoot) File.AppendAllText(FilePath, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " | " + action + " | " + (remote ?? String.Empty) + " | " + (drive ?? String.Empty) + " | " + detail + Environment.NewLine, new UTF8Encoding(false)); }
             catch (IOException) { } catch (UnauthorizedAccessException) { }

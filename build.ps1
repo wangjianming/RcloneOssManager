@@ -1,6 +1,7 @@
 ﻿# 构建全部源码；默认输出到build目录，不覆盖正式运行程序。
 # 用法：build.cmd；或build.cmd -OutputPath D:\目标目录\RcloneOssManager.exe。
-param([string]$OutputPath = '', [string]$RcloneExecutable = '', [switch]$NoEmbeddedRclone)
+# 部署：build.cmd -DeployDir D:\tools\RcloneOssManager，编译后停止旧实例、覆盖并启动，便于立即验证。
+param([string]$OutputPath = '', [string]$RcloneExecutable = '', [switch]$NoEmbeddedRclone, [string]$DeployDir = '')
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 $root = $PSScriptRoot
@@ -55,6 +56,17 @@ try {
     finally { Pop-Location }
     Copy-Item -LiteralPath $stagedExe -Destination $output -Force
     Write-Host ('编译通过：' + $sources.Count + '个源码文件 → ' + $output + '；单文件内嵌引擎=' + (!$NoEmbeddedRclone))
+    if (![string]::IsNullOrWhiteSpace($DeployDir)) {
+        $installDir = [IO.Path]::GetFullPath($DeployDir)
+        [void][IO.Directory]::CreateDirectory($installDir)
+        $installExe = Join-Path $installDir 'RcloneOssManager.exe'
+        Get-Process RcloneOssManager -ErrorAction SilentlyContinue | ForEach-Object { [void]$_.CloseMainWindow() }
+        Start-Sleep -Seconds 2
+        Get-Process RcloneOssManager -ErrorAction SilentlyContinue | Stop-Process -Force
+        Copy-Item -LiteralPath $output -Destination $installExe -Force
+        Start-Process -FilePath $installExe
+        Write-Host ('已部署并启动：' + $installExe)
+    }
 }
 catch { Write-Error $_; exit 1 }
 finally { if ($stage -and (Test-Path -LiteralPath $stage)) { Remove-Item -LiteralPath $stage -Recurse -Force } }
