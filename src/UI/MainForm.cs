@@ -641,24 +641,32 @@ namespace RcloneOssManager
         {
             var menu = new ContextMenuStrip { Renderer = new UiStyle.StripeMenuRenderer(), ShowImageMargin = false, Font = new Font("Microsoft YaHei UI", 10F) };
             menu.Items.Add("新增", null, delegate { OpenEditor(null); });
-            menu.Items.Add("测试", null, delegate { TestSelected(); });
             menu.Items.Add("编辑", null, delegate { var item = SelectedItem(); if (item != null) OpenEditor(item.Name); });
+            menu.Items.Add("测试", null, delegate { TestSelected(); });
             menu.Items.Add("改名（不影响挂载）", null, delegate { RenameSelected(); });
             menu.Items.Add("管理文件", null, delegate { LoadEmbeddedFiles(); });
-            menu.Items.Add("删除", null, delegate { DeleteSelected(); });
             menu.Items.Add("刷新", null, delegate { LoadRows(); });
+            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("挂载", null, delegate { MountSelected(); });
             menu.Items.Add("卸载", null, delegate { UnmountSelected(); });
+            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("查看日志", null, delegate { OpenSelectedLog(); });
+            menu.Items.Add(new ToolStripSeparator());
+            var delete = new ToolStripMenuItem("删除") { ForeColor = UiStyle.DangerText };
+            delete.Click += delegate { DeleteSelected(); };
+            menu.Items.Add(delete);
             menu.Opening += delegate
             {
                 var selected = SelectedName();
                 foreach (ToolStripItem entry in menu.Items)
+                {
+                    if (entry is ToolStripSeparator) continue;
                     entry.Enabled = !upgrading && (entry.Text == "新增" || entry.Text == "刷新" || (selected != null && !operations.Contains(selected)));
+                }
             };
             return menu;
         }
-        /// <summary>把低频操作收进“更多”菜单：删除、日志、配置、路径设置、升级和关于。</summary>
+        /// <summary>把低频操作收进“更多”菜单：删除、日志与配置、迁移设置、升级和关于。</summary>
         private void BuildMoreMenu()
         {
             var deleteItem = new ToolStripMenuItem("删除连接") { ForeColor = UiStyle.DangerText };
@@ -675,7 +683,7 @@ namespace RcloneOssManager
             upgradeItem.Click += delegate { UpgradeRclone(); };
             var aboutItem = new ToolStripMenuItem("关于");
             aboutItem.Click += delegate { using (var dialog = new AboutForm(this)) dialog.ShowDialog(this); };
-            moreMenu.Items.AddRange(new ToolStripItem[] { deleteItem, new ToolStripSeparator(), logItem, configItem, exportItem, pathsItem, upgradeItem, new ToolStripSeparator(), aboutItem });
+            moreMenu.Items.AddRange(new ToolStripItem[] { deleteItem, new ToolStripSeparator(), logItem, configItem, new ToolStripSeparator(), exportItem, pathsItem, new ToolStripSeparator(), upgradeItem, new ToolStripSeparator(), aboutItem });
             moreMenu.Opening += delegate
             {
                 var selected = SelectedName();
