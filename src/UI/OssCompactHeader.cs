@@ -40,7 +40,7 @@ namespace RcloneOssManager
             }
             moreMenu.Items.Add(new ToolStripSeparator());
             var settings = new ToolStripMenuItem("传输设置");
-            var options = new TableLayoutPanel { Name = "transferOptions", Size = new Size(230, 66), ColumnCount = 2, RowCount = 2, Padding = new Padding(4), Margin = new Padding(0), Font = Font, BackColor = Color.FromArgb(245, 247, 251) };
+            var options = new TableLayoutPanel { Name = "transferOptions", Size = new Size(230, 66), ColumnCount = 2, RowCount = 2, Padding = new Padding(4), Margin = new Padding(0), Font = Font, BackColor = UiStyle.Surface };
             options.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); options.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
             options.RowStyles.Add(new RowStyle(SizeType.Absolute, 28)); options.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             overwrite.Margin = new Padding(4, 3, 0, 0); options.Controls.Add(overwrite, 0, 0); options.SetColumnSpan(overwrite, 2);

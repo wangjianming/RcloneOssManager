@@ -18,6 +18,8 @@ namespace RcloneOssManager
         public string FileManagerExecutable { get; set; }
         /// <summary>需要 rclone 挂载时追加 --use-server-modtime 的连接标识；默认空。</summary>
         public string[] ServerModtimeRemotes { get; set; }
+        /// <summary>界面主题：light 或 dark；空值按浅色处理。</summary>
+        public string Theme { get; set; }
         private string settingsFile, baseFolder, dataFolder;
         private static RuntimePaths current;
         internal static RuntimePaths Current { get { return current ?? (current = Load()); } }
@@ -94,21 +96,22 @@ namespace RcloneOssManager
         }
 
         /// <summary>原子保存路径选项，正在运行的客户端保持当前设置，重启后统一生效。</summary>
-        /// <param name="executable">明确选择的rclone程序。</param><param name="configuration">配置文件路径。</param><param name="fileManagerExecutable">文件管理器程序，可空。</param>
-        internal void Save(string executable, string configuration, string fileManagerExecutable = null)
+        /// <param name="executable">明确选择的rclone程序。</param><param name="configuration">配置文件路径。</param><param name="fileManagerExecutable">文件管理器程序，可空。</param><param name="theme">界面主题 light 或 dark，可空表示保持不变。</param>
+        internal void Save(string executable, string configuration, string fileManagerExecutable = null, string theme = null)
         {
             executable = FullPath(executable); configuration = FullPath(configuration);
             var fileManager = String.IsNullOrWhiteSpace(fileManagerExecutable) ? null : FullPath(fileManagerExecutable.Trim());
+            var selectedTheme = String.IsNullOrWhiteSpace(theme) ? Theme : theme.Trim().ToLowerInvariant();
             if (!File.Exists(executable) || !String.Equals(Path.GetExtension(executable), ".exe", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("请选择存在的rclone.exe。");
             if (!File.Exists(configuration)) throw new ArgumentException("请选择存在的rclone配置文件。");
             if (fileManager != null && (!File.Exists(fileManager) || !String.Equals(Path.GetExtension(fileManager), ".exe", StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("请选择存在的文件管理器程序。");
             Directory.CreateDirectory(Path.GetDirectoryName(settingsFile)); var stage = settingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try
             {
-                File.WriteAllText(stage, new JavaScriptSerializer().Serialize(new RuntimePaths { RcloneExecutable = executable, RcloneConfiguration = configuration, FileManagerExecutable = fileManager, ServerModtimeRemotes = ServerModtimeRemotes }), new UTF8Encoding(false));
+                File.WriteAllText(stage, new JavaScriptSerializer().Serialize(new RuntimePaths { RcloneExecutable = executable, RcloneConfiguration = configuration, FileManagerExecutable = fileManager, ServerModtimeRemotes = ServerModtimeRemotes, Theme = selectedTheme }), new UTF8Encoding(false));
                 if (File.Exists(settingsFile)) File.Replace(stage, settingsFile, settingsFile + ".bak"); else File.Move(stage, settingsFile);
                 var saved = new JavaScriptSerializer().Deserialize<RuntimePaths>(File.ReadAllText(settingsFile, Encoding.UTF8));
-                if (saved.RcloneExecutable != executable || saved.RcloneConfiguration != configuration || saved.FileManagerExecutable != fileManager) throw new IOException("路径设置读回核验失败。");
+                if (saved.RcloneExecutable != executable || saved.RcloneConfiguration != configuration || saved.FileManagerExecutable != fileManager || saved.Theme != selectedTheme) throw new IOException("路径设置读回核验失败。");
             }
             finally { if (File.Exists(stage)) File.Delete(stage); }
         }

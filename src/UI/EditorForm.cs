@@ -26,8 +26,8 @@ namespace RcloneOssManager
         private RemoteDefinition loadedDefinition;
         private readonly TextBox name = Box(); private readonly ComboBox type = new ComboBox(); private readonly TextBox endpoint = Box(); private readonly TextBox account = Box(); private readonly TextBox secret = Box(); private readonly TextBox region = Box(); private readonly ComboBox drive = new ComboBox(); private readonly TextBox volumeName = Box();
         private readonly Button testButton = new Button { Text = "测试" }, saveButton = new Button { Text = "保存" }, mountButton = new Button { Text = "挂载" }, cancelButton = new Button { Text = "取消" };
-        private readonly Label endpointHint = new Label { AutoSize = true, ForeColor = Color.DimGray, MaximumSize = new Size(400, 0) };
-        private readonly Label resultLabel = new Label { Dock = DockStyle.Fill, ForeColor = Color.DimGray, AutoEllipsis = true };
+        private readonly Label endpointHint = new Label { AutoSize = true, ForeColor = UiStyle.TextMuted, MaximumSize = new Size(400, 0) };
+        private readonly Label resultLabel = new Label { Dock = DockStyle.Fill, ForeColor = UiStyle.TextMuted, AutoEllipsis = true };
         private readonly Dictionary<string, string> mounts;
         private readonly Dictionary<string, MountRecord> records;
         private bool busy, testing, closeAfterTest;
@@ -43,7 +43,7 @@ namespace RcloneOssManager
             records = savedMounts ?? new Dictionary<string, MountRecord>(StringComparer.OrdinalIgnoreCase);
             Text = exists ? "编辑 OSS 连接" : "新增 OSS 连接"; Icon = RuntimePaths.LoadIcon(); StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(660, 640); FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = false;
-            BackColor = Color.FromArgb(247, 249, 252); Font = new Font("Microsoft YaHei UI", 10F); KeyPreview = true; AutoScaleMode = AutoScaleMode.Dpi;
+            BackColor = UiStyle.Surface; ForeColor = UiStyle.Text; Font = new Font("Microsoft YaHei UI", 10F); KeyPreview = true; AutoScaleMode = AutoScaleMode.Dpi;
             type.DropDownStyle = ComboBoxStyle.DropDownList; type.Items.AddRange(new object[] { "MinIO / S3 兼容", "阿里云 OSS", "其他 S3 兼容", "WebDAV", "SFTP", "FTP" }); type.SelectedIndex = 0;
             var occupied = new HashSet<string>(Environment.GetLogicalDrives().Select(x => x.TrimEnd('\\')), StringComparer.OrdinalIgnoreCase);
             drive.DropDownStyle = ComboBoxStyle.DropDownList; drive.Items.Add("不挂载"); foreach (var letter in Enumerable.Range('D', 23).Select(x => ((char)x).ToString() + ":").Where(x => !occupied.Contains(x))) drive.Items.Add(letter); drive.SelectedIndex = 0;
@@ -64,12 +64,12 @@ namespace RcloneOssManager
             layout.Controls.Remove(name);
             var namePanel = new Panel { Dock = DockStyle.Fill };
             name.Dock = DockStyle.Top; name.Margin = new Padding(0);
-            namePanel.Controls.Add(new Label { Text = "支持中文、数字、空格和符号；修改名称不影响挂载。", Dock = DockStyle.Bottom, Height = 30, ForeColor = Color.DimGray }); namePanel.Controls.Add(name); layout.Controls.Add(namePanel, 1, 0);
+            namePanel.Controls.Add(new Label { Text = "支持中文、数字、空格和符号；修改名称不影响挂载。", Dock = DockStyle.Bottom, Height = 30, ForeColor = UiStyle.TextMuted }); namePanel.Controls.Add(name); layout.Controls.Add(namePanel, 1, 0);
             layout.Controls.Add(endpointHint, 1, 3);
             layout.Controls.Remove(volumeName);
             var volumePanel = new Panel { Dock = DockStyle.Fill };
             volumeName.Dock = DockStyle.Top; volumeName.Margin = new Padding(0);
-            volumePanel.Controls.Add(new Label { Text = "资源管理器中盘符旁显示的名称；网络盘只能在挂载时设置，改名需重新挂载生效。", Dock = DockStyle.Bottom, Height = 30, ForeColor = Color.DimGray }); volumePanel.Controls.Add(volumeName); layout.Controls.Add(volumePanel, 1, 7);
+            volumePanel.Controls.Add(new Label { Text = "资源管理器中盘符旁显示的名称；网络盘只能在挂载时设置，改名需重新挂载生效。", Dock = DockStyle.Bottom, Height = 30, ForeColor = UiStyle.TextMuted }); volumePanel.Controls.Add(volumeName); layout.Controls.Add(volumePanel, 1, 7);
             resultLabel.Text = "测试只读访问，不保存输入；密码按当前设置明文展示。";
             layout.Controls.Add(resultLabel, 0, 9); layout.SetColumnSpan(resultLabel, 2);
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
@@ -117,10 +117,10 @@ namespace RcloneOssManager
             if (busy) return;
             var definition = Definition(); SetBusy(true, true); testCancellation = new CancellationTokenSource();
             var cancellation = testCancellation;
-            resultLabel.Text = "正在测试连接…可取消，测试不会保存输入。"; resultLabel.ForeColor = Color.DimGray;
+            resultLabel.Text = "正在测试连接…可取消，测试不会保存输入。"; resultLabel.ForeColor = UiStyle.TextMuted;
             try { await Task.Run(() => client.TestDefinition(definition, exists, cancellation.Token, originalName)); if (!IsDisposed) { resultLabel.Text = "连接测试成功。"; resultLabel.ForeColor = Color.DarkGreen; } }
             catch (OperationCanceledException) { if (!IsDisposed) resultLabel.Text = "测试已取消，配置未改动。"; }
-            catch (Exception ex) { if (!IsDisposed) { resultLabel.Text = ex.Message; resultLabel.ForeColor = Color.Firebrick; } ManagerLog.Write("编辑页测试失败", definition.Name, "", ex.Message); }
+            catch (Exception ex) { if (!IsDisposed) { resultLabel.Text = ex.Message; resultLabel.ForeColor = UiStyle.DangerText; } ManagerLog.Write("编辑页测试失败", definition.Name, "", ex.Message); }
             finally
             {
                 cancellation.Dispose(); testCancellation = null;
@@ -174,7 +174,7 @@ namespace RcloneOssManager
                 }
                 DialogResult = DialogResult.OK; Close();
             }
-            catch (Exception ex) { resultLabel.Text = ex.Message; resultLabel.ForeColor = Color.Firebrick; ManagerLog.Write("编辑页保存失败", definition.Name, "", ex.Message); }
+            catch (Exception ex) { resultLabel.Text = ex.Message; resultLabel.ForeColor = UiStyle.DangerText; ManagerLog.Write("编辑页保存失败", definition.Name, "", ex.Message); }
             finally
             {
                 if (!IsDisposed)

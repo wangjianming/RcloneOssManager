@@ -29,9 +29,9 @@ namespace RcloneOssManager
         private readonly List<string> paths = new List<string>();
         private Button previousPage, nextPage, backPath, forwardPath;
         private readonly Label pageInfo = new Label { AutoSize = true, Margin = new Padding(8, 7, 8, 0) };
-        private readonly Label bucketInfo = new Label { Dock = DockStyle.Fill, AutoEllipsis = true, Margin = new Padding(0), ForeColor = Color.DimGray };
+        private readonly Label bucketInfo = new Label { Dock = DockStyle.Fill, AutoEllipsis = true, Margin = new Padding(0), ForeColor = UiStyle.TextMuted };
         /// <summary>缓存来源独占一行，不与桶权限或文件列表共享绘制区域。</summary>
-        private readonly Label cacheInfo = new Label { Name = "cacheInfo", Dock = DockStyle.Fill, AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Color.DimGray, Margin = new Padding(0) };
+        private readonly Label cacheInfo = new Label { Name = "cacheInfo", Dock = DockStyle.Fill, AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft, ForeColor = UiStyle.TextMuted, Margin = new Padding(0) };
         private CancellationTokenSource permissionRead;
         private string permissionPath = "", permissionText = "";
         private OssQuickResult quick = new OssQuickResult();
@@ -96,14 +96,14 @@ namespace RcloneOssManager
             list.DrawSubItem += delegate(object sender, DrawListViewSubItemEventArgs e)
             {
                 if (e.ColumnIndex != 4) { UiStyle.DrawCell(e, list.HoveredIndex); return; }
-                using (var brush = new SolidBrush(e.Item.Selected ? SystemColors.Highlight : e.Item.BackColor)) e.Graphics.FillRectangle(brush, e.Bounds);
+                using (var brush = new SolidBrush(e.Item.Selected ? UiStyle.Selection : e.Item.BackColor)) e.Graphics.FillRectangle(brush, e.Bounds);
                 var entry = e.Item.Tag as OssEntry; if (entry == null) return;
                 for (var i = 0; i < ActionLabels.Length; i++) if (ActionAvailable(entry, i))
                 {
                     var bounds = ActionBounds(e.Bounds, i);
                     if (!Busy && hoveredActionRow == e.Item && hoveredAction == i)
-                        using (var brush = new SolidBrush(e.Item.Selected ? Color.FromArgb(76, 139, 204) : UiStyle.AccentSoft)) e.Graphics.FillRectangle(brush, Rectangle.Inflate(bounds, -1, -1));
-                    UiStyle.DrawActionIcon(e.Graphics, bounds, i == 2 ? 3 : i == 3 ? 2 : i, Busy ? Color.Gray : e.Item.Selected ? SystemColors.HighlightText : UiStyle.AccentText);
+                        using (var brush = new SolidBrush(e.Item.Selected ? UiStyle.SelectionBar : UiStyle.AccentSoft)) e.Graphics.FillRectangle(brush, Rectangle.Inflate(bounds, -1, -1));
+                    UiStyle.DrawActionIcon(e.Graphics, bounds, i == 2 ? 3 : i == 3 ? 2 : i, Busy ? UiStyle.TextMuted : e.Item.Selected ? UiStyle.Text : UiStyle.AccentText);
                 }
             };
             list.MouseUp += delegate(object sender, MouseEventArgs e)

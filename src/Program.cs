@@ -24,6 +24,8 @@ namespace RcloneOssManager
         [STAThread]
         private static void Main(string[] argv)
         {
+            try { UiStyle.IsDark = String.Equals(RuntimePaths.Current.Theme, "dark", StringComparison.OrdinalIgnoreCase); }
+            catch (Exception) { UiStyle.IsDark = false; }
             var background = argv != null && argv.Any(x => String.Equals(x, "--background", StringComparison.OrdinalIgnoreCase));
             bool created;
             try { singleInstance = new Mutex(true, SingleInstanceChannel.MutexName(background), out created); }

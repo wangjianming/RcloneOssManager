@@ -12,71 +12,77 @@ namespace RcloneOssManager
         /// <summary>文件页文字按钮及单行输入框的96DPI基准规格。</summary>
         internal const int ButtonWidth = 96, ButtonHeight = 32;
 
-        /// <summary>窗口底色，与浅色文件管理器的内容区一致。</summary>
-        internal static Color Surface { get { return Color.FromArgb(243, 243, 243); } }
+        /// <summary>当前是否使用深色主题；启动时按保存的设置初始化。</summary>
+        internal static bool IsDark { get; set; }
+
+        /// <summary>窗口底色。</summary>
+        internal static Color Surface { get { return IsDark ? Color.FromArgb(30, 30, 30) : Color.FromArgb(243, 243, 243); } }
 
         /// <summary>卡片与列表底色。</summary>
-        internal static Color Card { get { return Color.White; } }
+        internal static Color Card { get { return IsDark ? Color.FromArgb(37, 37, 38) : Color.White; } }
 
         /// <summary>分隔线与控件描边。</summary>
-        internal static Color Border { get { return Color.FromArgb(224, 224, 224); } }
+        internal static Color Border { get { return IsDark ? Color.FromArgb(63, 63, 70) : Color.FromArgb(224, 224, 224); } }
 
         /// <summary>列表内更浅的分隔线。</summary>
-        internal static Color BorderSoft { get { return Color.FromArgb(236, 236, 236); } }
+        internal static Color BorderSoft { get { return IsDark ? Color.FromArgb(51, 51, 55) : Color.FromArgb(236, 236, 236); } }
 
         /// <summary>正文颜色。</summary>
-        internal static Color Text { get { return Color.FromArgb(27, 27, 27); } }
+        internal static Color Text { get { return IsDark ? Color.FromArgb(232, 232, 232) : Color.FromArgb(27, 27, 27); } }
 
         /// <summary>次要说明文字。</summary>
-        internal static Color TextMuted { get { return Color.FromArgb(106, 106, 106); } }
+        internal static Color TextMuted { get { return IsDark ? Color.FromArgb(160, 160, 160) : Color.FromArgb(106, 106, 106); } }
 
         /// <summary>主操作色。</summary>
-        internal static Color Accent { get { return Color.FromArgb(15, 108, 189); } }
+        internal static Color Accent { get { return IsDark ? Color.FromArgb(59, 130, 246) : Color.FromArgb(15, 108, 189); } }
 
         /// <summary>主操作悬停色。</summary>
-        internal static Color AccentHover { get { return Color.FromArgb(17, 94, 163); } }
+        internal static Color AccentHover { get { return IsDark ? Color.FromArgb(37, 99, 235) : Color.FromArgb(17, 94, 163); } }
 
         /// <summary>主操作的浅色底，用于次要按钮。</summary>
-        internal static Color AccentSoft { get { return Color.FromArgb(235, 243, 250); } }
+        internal static Color AccentSoft { get { return IsDark ? Color.FromArgb(30, 58, 95) : Color.FromArgb(235, 243, 250); } }
 
         /// <summary>浅色按钮上的主操作文字色。</summary>
-        internal static Color AccentText { get { return Color.FromArgb(20, 86, 148); } }
+        internal static Color AccentText { get { return IsDark ? Color.FromArgb(122, 184, 245) : Color.FromArgb(20, 86, 148); } }
 
-        /// <summary>选中行底色，保持正文可读而不是反白。</summary>
-        internal static Color Selection { get { return Color.FromArgb(225, 239, 251); } }
+        /// <summary>主操作按钮上的文字色；明暗主题都用白色。</summary>
+        internal static Color OnAccent { get { return Color.White; } }
+
+        /// <summary>选中行底色。</summary>
+        internal static Color Selection { get { return IsDark ? Color.FromArgb(38, 79, 120) : Color.FromArgb(225, 239, 251); } }
 
         /// <summary>选中行左侧强调条。</summary>
-        internal static Color SelectionBar { get { return Color.FromArgb(15, 108, 189); } }
+        internal static Color SelectionBar { get { return IsDark ? Color.FromArgb(59, 130, 246) : Color.FromArgb(15, 108, 189); } }
 
         /// <summary>危险操作底色。</summary>
-        internal static Color DangerSoft { get { return Color.FromArgb(253, 235, 235); } }
+        internal static Color DangerSoft { get { return IsDark ? Color.FromArgb(74, 31, 31) : Color.FromArgb(253, 235, 235); } }
 
         /// <summary>危险操作文字色。</summary>
-        internal static Color DangerText { get { return Color.FromArgb(163, 45, 45); } }
+        internal static Color DangerText { get { return IsDark ? Color.FromArgb(248, 113, 113) : Color.FromArgb(163, 45, 45); } }
 
         /// <summary>成功状态文字色，用于状态栏和进度终态。</summary>
-        internal static Color SuccessText { get { return Color.FromArgb(21, 122, 75); } }
+        internal static Color SuccessText { get { return IsDark ? Color.FromArgb(74, 222, 128) : Color.FromArgb(21, 122, 75); } }
 
         /// <summary>进行中状态文字色。</summary>
         internal static Color InfoText { get { return AccentText; } }
 
-        /// <summary>列表行悬停时的浅色高亮，介于条纹色与选中色之间。</summary>
-        internal static Color Hover { get { return Color.FromArgb(238, 244, 250); } }
+        /// <summary>列表行悬停时的浅色高亮。</summary>
+        internal static Color Hover { get { return IsDark ? Color.FromArgb(42, 45, 49) : Color.FromArgb(238, 244, 250); } }
 
         /// <summary>悬停行左侧强调条，弱于选中态。</summary>
-        internal static Color HoverBar { get { return Color.FromArgb(122, 177, 227); } }
+        internal static Color HoverBar { get { return IsDark ? Color.FromArgb(59, 95, 133) : Color.FromArgb(122, 177, 227); } }
 
         /// <summary>进度条底槽颜色。</summary>
-        internal static Color ProgressTrack { get { return Color.FromArgb(228, 233, 240); } }
+        internal static Color ProgressTrack { get { return IsDark ? Color.FromArgb(51, 56, 64) : Color.FromArgb(228, 233, 240); } }
 
         /// <summary>进度条进行中颜色。</summary>
-        internal static Color ProgressRunning { get { return Color.FromArgb(15, 108, 189); } }
+        internal static Color ProgressRunning { get { return IsDark ? Color.FromArgb(59, 130, 246) : Color.FromArgb(15, 108, 189); } }
 
         /// <summary>进度条成功颜色。</summary>
-        internal static Color ProgressDone { get { return Color.FromArgb(81, 171, 120); } }
+        internal static Color ProgressDone { get { return IsDark ? Color.FromArgb(74, 222, 128) : Color.FromArgb(81, 171, 120); } }
 
         /// <summary>进度条失败颜色。</summary>
-        internal static Color ProgressFail { get { return Color.FromArgb(214, 96, 96); } }
+        internal static Color ProgressFail { get { return IsDark ? Color.FromArgb(248, 113, 113) : Color.FromArgb(214, 96, 96); } }
 
         /// <summary>统一各窗口状态栏文字颜色，完成绿色、失败红色、进行中灰色。</summary>
         /// <param name="label">状态栏标签。</param><param name="text">展示文本。</param><param name="state">success、error、info 或空表示普通。</param>
@@ -120,17 +126,17 @@ namespace RcloneOssManager
 
         /// <summary>交替浅色背景，系统仍保留选中高亮。</summary>
         /// <param name="index">显示顺序。</param><returns>当前行背景。</returns>
-        internal static Color StripeColor(int index) { return index % 2 == 0 ? Color.White : Color.FromArgb(249, 250, 251); }
+        internal static Color StripeColor(int index) { return index % 2 == 0 ? Card : (IsDark ? Color.FromArgb(42, 42, 44) : Color.FromArgb(249, 250, 251)); }
 
         /// <summary>自绘浅色表头，仅保留底部一条分隔线，视觉更干净。</summary>
         /// <param name="e">实际列表表头绘制参数。</param>
         internal static void DrawHeader(DrawListViewColumnHeaderEventArgs e, string suffix)
         {
-            using (var brush = new SolidBrush(Color.FromArgb(250, 250, 250))) e.Graphics.FillRectangle(brush, e.Bounds);
+            using (var brush = new SolidBrush(IsDark ? Color.FromArgb(45, 45, 48) : Color.FromArgb(250, 250, 250))) e.Graphics.FillRectangle(brush, e.Bounds);
             using (var pen = new Pen(BorderSoft))
                 e.Graphics.DrawLine(pen, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
             using (var font = new Font(e.Font, FontStyle.Regular))
-                TextRenderer.DrawText(e.Graphics, e.Header.Text + suffix, font, Rectangle.Inflate(e.Bounds, -6, 0), Color.FromArgb(59, 59, 59), TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
+                TextRenderer.DrawText(e.Graphics, e.Header.Text + suffix, font, Rectangle.Inflate(e.Bounds, -6, 0), IsDark ? Text : Color.FromArgb(59, 59, 59), TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
         }
         internal static void DrawHeader(DrawListViewColumnHeaderEventArgs e) { DrawHeader(e, ""); }
 
@@ -184,6 +190,7 @@ namespace RcloneOssManager
         {
             if (form == null) return;
             form.BackColor = Surface;
+            form.ForeColor = Text;
             form.HandleCreated += delegate { StyleChrome(form.Handle); };
             if (form.IsHandleCreated) StyleChrome(form.Handle);
         }

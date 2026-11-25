@@ -53,7 +53,7 @@ namespace RcloneOssManager
         /// <summary>本批独立取消令牌的队列，仅在执行期间保留。</summary>
         private OssDownloadQueue downloadQueue;
         /// <summary>下载列表区域和布局，队列结束后保留结果供检查；以 Dock=Bottom 挂在文件列表下方，收起时高度归零。</summary>
-        private readonly Panel downloadPanel = new Panel { Dock = DockStyle.Bottom, Height = 0, Visible = true, Margin = new Padding(0), BackColor = Color.White };
+        private readonly Panel downloadPanel = new Panel { Dock = DockStyle.Bottom, Height = 0, Visible = true, Margin = new Padding(0), BackColor = UiStyle.Card };
         /// <summary>任务区操作按钮及详情布局，不受远端Busy禁用限制。</summary>
         private readonly FlowLayoutPanel taskTools = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, AutoScroll = true, Margin = new Padding(0) };
         private readonly TableLayoutPanel taskLayout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = new Padding(0) };
@@ -63,9 +63,9 @@ namespace RcloneOssManager
         /// <summary>当前下载队列可同时传输的文件数，避免未经限制地占满连接。</summary>
         private readonly NumericUpDown parallelDownloads = new NumericUpDown { Name = "parallelDownloads", Minimum = 1, Maximum = 4, Value = 3, Width = 54, TextAlign = HorizontalAlignment.Center, Margin = new Padding(4, 5, 8, 0) };
         /// <summary>文件区宿主：浏览器占满剩余空间，任务区以 Dock=Bottom 叠在下方，收起时列表自然占满不留空白。</summary>
-        private readonly Panel filesHost = new Panel { Name = "filesHost", Dock = DockStyle.Fill, Margin = new Padding(0), BackColor = Color.White };
+        private readonly Panel filesHost = new Panel { Name = "filesHost", Dock = DockStyle.Fill, Margin = new Padding(0), BackColor = UiStyle.Card };
         /// <summary>选中任务的实际时间、完整路径和原因，支持选择复制。</summary>
-        private readonly TextBox taskDetails = new TextBox { Name = "taskDetails", Dock = DockStyle.Fill, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None, BackColor = Color.FromArgb(239, 245, 252), Margin = new Padding(4) };
+        private readonly TextBox taskDetails = new TextBox { Name = "taskDetails", Dock = DockStyle.Fill, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None, BackColor = UiStyle.Hover, Margin = new Padding(4) };
 
         /// <summary>是否存在正在列举、传输或验证的任务。</summary>
         internal bool Busy { get { return active != null; } }
@@ -107,7 +107,7 @@ namespace RcloneOssManager
             list.Dock = DockStyle.Fill; list.View = View.Details; list.FullRowSelect = true; list.HideSelection = false; list.MultiSelect = true;
             list.GridLines = false; list.Font = new Font("Microsoft YaHei UI", 11F); list.ShowItemToolTips = false;
             list.Columns.Add("名称", 430); list.Columns.Add("大小", 110); list.Columns.Add("类型", 80); list.Columns.Add("修改时间", 175); list.Columns.Add("操作", 168);
-            list.Columns[1].TextAlign = HorizontalAlignment.Right; list.BorderStyle = BorderStyle.None; list.BackColor = Color.White; list.Margin = new Padding(0);
+            list.Columns[1].TextAlign = HorizontalAlignment.Right; list.BorderStyle = BorderStyle.None; list.BackColor = UiStyle.Card; list.Margin = new Padding(0);
             // 大小、类型、修改时间只按最宽内容取固定宽（1023.9 GiB、存储桶、2026-11-19 20:19:00，自绘单元格左右各留4像素），操作列固定四段图标宽；
             // 窗口变宽时剩余空间全部给名称列，避免时间和大小两侧留大片空白（WinForms ListView 不支持原生冻结列）。
             UiStyle.BindColumns(list, FileMinimumWidths, FileColumnWeights);
@@ -152,7 +152,7 @@ namespace RcloneOssManager
             {
                 var item = e.Item.Tag as OssDownloadItem;
                 if (e.ColumnIndex != 2 || item == null) { UiStyle.DrawCell(e, downloads.HoveredIndex); return; }
-                DrawDownloadProgress(e.Graphics, e.Bounds, item, downloads.Font, e.Item.Selected ? SystemColors.Highlight : e.Item.BackColor);
+                DrawDownloadProgress(e.Graphics, e.Bounds, item, downloads.Font, e.Item.Selected ? UiStyle.Selection : e.Item.BackColor);
             };
             taskTools.Controls.Add(new Label { Text = "任务记录", AutoSize = true, Font = new Font(Font, FontStyle.Bold), Margin = new Padding(6, 8, 16, 0) });
             taskTools.Controls.Add(downloadFolder);
@@ -163,7 +163,7 @@ namespace RcloneOssManager
             taskLayout.Controls.Add(taskTools, 0, 0); taskLayout.Controls.Add(downloads, 0, 1); taskLayout.Controls.Add(taskDetails, 0, 2); taskLayout.Controls.Add(history, 0, 3); downloadPanel.Controls.Add(taskLayout);
             downloads.SelectedIndexChanged += delegate { UpdateTaskDetails(); UpdateTaskPanelVisibility(); };
             UpdateTaskDetails();
-            var browser = new TableLayoutPanel { Name = "fileBrowser", Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, BackColor = Color.White, Padding = new Padding(6), Margin = new Padding(0) };
+            var browser = new TableLayoutPanel { Name = "fileBrowser", Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, BackColor = UiStyle.Card, Padding = new Padding(6), Margin = new Padding(0) };
             browser.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); browser.RowStyles.Add(new RowStyle(SizeType.Absolute, 46)); browser.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); browser.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             browser.Controls.Add(address, 0, 0); browser.Controls.Add(list, 0, 2);
             InitBrowser(browser);
@@ -174,7 +174,7 @@ namespace RcloneOssManager
             var layout = new TableLayoutPanel { Name = "fileLayout", Dock = DockStyle.Fill, Padding = new Padding(8), ColumnCount = 1, RowCount = 3 };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36)); layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
             layout.Controls.Add(header, 0, 0); layout.Controls.Add(filesHost, 0, 1); layout.Controls.Add(status, 0, 2); Controls.Add(layout);
-            history.Dock = DockStyle.Fill; history.BorderStyle = BorderStyle.FixedSingle; history.BackColor = Color.FromArgb(249, 251, 254); history.Visible = false;
+            history.Dock = DockStyle.Fill; history.BorderStyle = BorderStyle.FixedSingle; history.BackColor = UiStyle.Card; history.Visible = false;
             showHistory.CheckedChanged += delegate { history.Visible = showHistory.Checked; UpdateTaskLayout(); };
             Shown += delegate { UpdateTaskLayout(); };
             status.Text = "无需挂载 · F5刷新 · F2改名 · Del删除 · Ctrl+Shift+N创建目录";
@@ -242,7 +242,7 @@ namespace RcloneOssManager
             var color = item.State == "已完成" ? UiStyle.ProgressDone : item.State == "失败" ? UiStyle.ProgressFail : item.State == "已取消" || item.State == "正在取消" ? Color.Silver : UiStyle.ProgressRunning;
             var fill = bar; fill.Width = (int)(bar.Width * (item.Percent ?? 0) / 100);
             if (fill.Width > 0) using (var brush = new SolidBrush(color)) graphics.FillRectangle(brush, fill);
-            TextRenderer.DrawText(graphics, item.PercentText, font, bar, Color.FromArgb(25, 42, 61), TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+            TextRenderer.DrawText(graphics, item.PercentText, font, bar, UiStyle.Text, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
             using (var pen = new Pen(UiStyle.BorderSoft)) graphics.DrawLine(pen, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
         }
 
@@ -264,7 +264,7 @@ namespace RcloneOssManager
         {
             var button = MainForm.ButtonOf(text, UiStyle.AccentSoft, UiStyle.AccentText);
             button.Size = new Size(UiStyle.ButtonWidth, UiStyle.ButtonHeight); button.Margin = new Padding(0, 0, 6, 0);
-            if (text == "上传文件" || text == "下载文件") { button.BackColor = UiStyle.Accent; button.ForeColor = Color.White; }
+            if (text == "上传文件" || text == "下载文件") { button.BackColor = UiStyle.Accent; button.ForeColor = UiStyle.OnAccent; }
             if (text == "删除文件" || text == "多选删除") { button.BackColor = UiStyle.DangerSoft; button.ForeColor = UiStyle.DangerText; }
             button.Click += delegate { if (text == "取消任务" || text == "取消选中下载" || text == "打开下载目录" || !Busy) action(); };
             return button;
@@ -344,7 +344,7 @@ namespace RcloneOssManager
                     if (item.IsDir && total == null && pendingUsage.Add(key)) usageQueue.Enqueue(key);
                 }
                 // 空目录和筛选无结果都补一行说明，避免整片空白看起来像加载失败。
-                if (page.Count == 0) list.Items.Add(new ListViewItem(new[] { entries.Count == 0 ? "此位置没有对象" : "没有名称包含“" + filter.Text + "”的条目", "", "", "", "" }) { ForeColor = SystemColors.GrayText, Tag = EmptyRow });
+                if (page.Count == 0) list.Items.Add(new ListViewItem(new[] { entries.Count == 0 ? "此位置没有对象" : "没有名称包含“" + filter.Text + "”的条目", "", "", "", "" }) { ForeColor = UiStyle.TextMuted, Tag = EmptyRow });
             }
             finally { list.EndUpdate(); }
             if (usageQueue.Count > 0 && !usageFillTimer.Enabled)
@@ -442,7 +442,7 @@ namespace RcloneOssManager
         {
             using (var dialog = new Form { Text = caption, ClientSize = new Size(670, 320), MinimumSize = new Size(570, 290), StartPosition = FormStartPosition.CenterParent, Font = Font, MinimizeBox = false, MaximizeBox = false })
             {
-                var details = new TextBox { Text = text, ReadOnly = true, Multiline = true, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None, BackColor = SystemColors.Window, Bounds = new Rectangle(16, 16, 638, 235), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
+                var details = new TextBox { Text = text, ReadOnly = true, Multiline = true, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None, BackColor = UiStyle.Card, Bounds = new Rectangle(16, 16, 638, 235), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
                 var ok = new Button { Text = confirm ? "开始统计" : "关闭", DialogResult = DialogResult.OK, Location = new Point(442, 273), Size = new Size(100, 34), Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
                 var back = new Button { Text = "取消", DialogResult = DialogResult.Cancel, Location = new Point(552, 273), Size = new Size(100, 34), Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Visible = confirm };
                 dialog.Controls.AddRange(new Control[] { details, ok, back });

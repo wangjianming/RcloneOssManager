@@ -21,13 +21,13 @@ namespace RcloneOssManager
     {
         private readonly MainForm owner;
         private readonly Label versions = new Label();
-        private readonly Button upgrade = MainForm.ButtonOf("检查并升级", Color.FromArgb(36, 104, 178), Color.White);
+        private readonly Button upgrade = MainForm.ButtonOf("检查并升级", UiStyle.Accent, UiStyle.OnAccent);
         internal AboutForm(MainForm value)
         {
             owner = value; Text = "关于 OSS 连接管理器"; Icon = RuntimePaths.LoadIcon();
             StartPosition = FormStartPosition.CenterParent; ClientSize = new Size(640, 350); MinimumSize = Size;
             MaximizeBox = false; MinimizeBox = false; KeyPreview = true; AutoScaleMode = AutoScaleMode.Dpi;
-            Font = new Font("Microsoft YaHei UI", 10F); BackColor = Color.FromArgb(247, 249, 252);
+            Font = new Font("Microsoft YaHei UI", 10F); BackColor = UiStyle.Surface; ForeColor = UiStyle.Text;
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28, 20, 28, 20), ColumnCount = 1, RowCount = 6 };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
@@ -35,7 +35,7 @@ namespace RcloneOssManager
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 68));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            layout.Controls.Add(new Label { Text = "OSS 连接管理器", Dock = DockStyle.Fill, Font = new Font("Microsoft YaHei UI", 17F, FontStyle.Bold), ForeColor = Color.FromArgb(30, 76, 125) }, 0, 0);
+            layout.Controls.Add(new Label { Text = "OSS 连接管理器", Dock = DockStyle.Fill, Font = new Font("Microsoft YaHei UI", 17F, FontStyle.Bold), ForeColor = UiStyle.AccentText }, 0, 0);
             versions.Text = "rclone 当前版本：读取中…\r\n官方最新版本：读取中…"; versions.Dock = DockStyle.Fill; layout.Controls.Add(versions, 0, 1);
             layout.Controls.Add(PathPanel("rclone 安装位置", RcloneClient.RclonePath), 0, 2);
             layout.Controls.Add(PathPanel("配置文件（路径可选中复制）", RcloneClient.ConfigPath), 0, 3);
@@ -71,8 +71,8 @@ namespace RcloneOssManager
         private static Control PathPanel(string caption, string path)
         {
             var panel = new Panel { Dock = DockStyle.Fill, Margin = new Padding(0, 4, 0, 6) };
-            panel.Controls.Add(new TextBox { Text = path, ReadOnly = true, Dock = DockStyle.Bottom, BorderStyle = BorderStyle.FixedSingle, BackColor = Color.White, Height = 28 });
-            panel.Controls.Add(new Label { Text = caption, Dock = DockStyle.Top, Height = 23, ForeColor = Color.DimGray });
+            panel.Controls.Add(new TextBox { Text = path, ReadOnly = true, Dock = DockStyle.Bottom, BorderStyle = BorderStyle.FixedSingle, BackColor = UiStyle.Card, Height = 28 });
+            panel.Controls.Add(new Label { Text = caption, Dock = DockStyle.Top, Height = 23, ForeColor = UiStyle.TextMuted });
             return panel;
         }
     }

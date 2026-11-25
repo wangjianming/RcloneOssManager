@@ -22,7 +22,7 @@ namespace RcloneOssManager
         private const string NotepadPlusPlusPath = @"D:\Program Files\Notepad++\notepad++.exe";
         private readonly RcloneClient client;
         private readonly BufferedListView list = new BufferedListView();
-        private readonly Button add = ButtonOf("新增", UiStyle.Accent, Color.White);
+        private readonly Button add = ButtonOf("新增", UiStyle.Accent, UiStyle.OnAccent);
         private readonly Button edit = ButtonOf("编辑", UiStyle.AccentSoft, UiStyle.AccentText);
 
         // 主窗口与文件管理合并为左右分栏：左侧连接列表，右侧嵌入文件区（参考同类云存储工具布局）。
@@ -384,7 +384,7 @@ namespace RcloneOssManager
                 UiStyle.ApplyWindow(dialog);
                 var hint = new Label { Text = "支持中文、数字、空格和常见符号。只改名称，不影响现有挂载。", Location = new Point(20, 18), Size = new Size(480, 32), ForeColor = UiStyle.TextMuted };
                 var input = new TextBox { Text = item.Text, Location = new Point(20, 58), Width = 480 };
-                var ok = ButtonOf("保存名称", UiStyle.Accent, Color.White); ok.SetBounds(280, 120, 104, 36); ok.DialogResult = DialogResult.OK;
+                var ok = ButtonOf("保存名称", UiStyle.Accent, UiStyle.OnAccent); ok.SetBounds(280, 120, 104, 36); ok.DialogResult = DialogResult.OK;
                 var back = ButtonOf("取消", UiStyle.AccentSoft, UiStyle.AccentText); back.SetBounds(396, 120, 104, 36); back.DialogResult = DialogResult.Cancel;
                 dialog.Controls.AddRange(new Control[] { hint, input, ok, back }); dialog.AcceptButton = ok; dialog.CancelButton = back;
                 if (dialog.ShowDialog(this) != DialogResult.OK || input.Text.Trim() == item.Text) return;
@@ -667,13 +667,15 @@ namespace RcloneOssManager
             logItem.Click += delegate { OpenSelectedLog(); };
             var configItem = new ToolStripMenuItem("编辑 rclone 配置");
             configItem.Click += delegate { OpenConfigFile(); };
+            var exportItem = new ToolStripMenuItem("导出连接清单…");
+            exportItem.Click += delegate { ExportConnections(); };
             var pathsItem = new ToolStripMenuItem("路径设置…");
             pathsItem.Click += delegate { using (var dialog = new RuntimeSettingsForm()) dialog.ShowDialog(this); };
             var upgradeItem = new ToolStripMenuItem("升级 rclone");
             upgradeItem.Click += delegate { UpgradeRclone(); };
             var aboutItem = new ToolStripMenuItem("关于");
             aboutItem.Click += delegate { using (var dialog = new AboutForm(this)) dialog.ShowDialog(this); };
-            moreMenu.Items.AddRange(new ToolStripItem[] { deleteItem, new ToolStripSeparator(), logItem, configItem, pathsItem, upgradeItem, new ToolStripSeparator(), aboutItem });
+            moreMenu.Items.AddRange(new ToolStripItem[] { deleteItem, new ToolStripSeparator(), logItem, configItem, exportItem, pathsItem, upgradeItem, new ToolStripSeparator(), aboutItem });
             moreMenu.Opening += delegate
             {
                 var selected = SelectedName();
@@ -681,10 +683,28 @@ namespace RcloneOssManager
                 deleteItem.Enabled = !busy && selected != null && !operations.Contains(selected);
                 logItem.Enabled = !busy && selected != null;
                 configItem.Enabled = !busy;
+                exportItem.Enabled = !busy;
                 pathsItem.Enabled = !busy;
                 upgradeItem.Enabled = !busy && tests.Count == 0;
                 aboutItem.Enabled = !busy;
             };
+        }
+
+        /// <summary>把当前连接清单导出为 CSV，只含名称、类型、端点等公开字段，不含账号与密钥。</summary>
+        private void ExportConnections()
+        {
+            using (var dialog = new SaveFileDialog { Filter = "CSV 文件|*.csv|文本文件|*.txt", FileName = "rclone-connections.csv" })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                var includeSecrets = MessageBox.Show(this, "是否在导出文件中包含账号与密钥明文？\r\n包含后任何拿到该文件的人都能看到凭证，请妥善保管。", "导出连接清单", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;
+                try
+                {
+                    var csv = ConnectionExport.BuildCsv(client, client.GetRemotes(), GetMounts(), includeSecrets);
+                    File.WriteAllText(dialog.FileName, csv, new UTF8Encoding(true));
+                    UiStyle.SetStatus(status, "已导出连接清单" + (includeSecrets ? "（含密钥）" : "") + "：" + dialog.FileName, "success");
+                }
+                catch (Exception ex) { UiStyle.SetStatus(status, "导出连接清单失败：" + ex.Message, "error"); }
+            }
         }
 
         private static Icon LoadIcon() { return RuntimePaths.LoadIcon(); }
