@@ -1,0 +1,16 @@
+# 构建产物
+/build/
+
+# 运行时日志与本地状态
+*.log
+/rclone-mounts.txt
+/RcloneOssManager.settings.json
+/rclone.exe
+/rclone.conf
+
+# 编辑器与系统
+.vs/
+.vscode/
+*.user
+Thumbs.db
+.DS_Store
